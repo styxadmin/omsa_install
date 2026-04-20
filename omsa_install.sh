@@ -289,34 +289,50 @@ PHASE="Special_Dependancies"
 phaseheader $PHASE
 sleep 1
 #===========================================================================================================================================
-# Get Special Dependencies - Updated for Proxmox 9 / Debian 12 (Bookworm)
 
 if [ $DEBUG -eq 1 ]
 then
-  echo -e "\e[96m++ $PHASE - (Debian 12 Bookworm path - pulling openwsman from Debian repos)\e[39m"
-  echo -e "\e[96m++ $PHASE - apt install -y libwsman1 libwsman-client4 libwsman-curl-client-transport1 openwsman libcimcclient0 cim-schema libsfcutil0 sfcb\e[39m"
+  echo -e "\e[96m++ $PHASE - Downloading and installing openwsman/wsman deps from Ubuntu Jammy\e[39m"
+  echo -e "\e[96m++ $PHASE - Downloading and installing libssl1.1 from Debian snapshot\e[39m"
 else
   echo
-  # On Debian 12, openwsman and most WSMAN libs are available natively.
-  # Install from apt directly rather than pulling Ubuntu .deb files.
-  apt install -y \
-    libwsman1 \
-    libwsman-client4 \
-    libwsman-curl-client-transport1 \
-    openwsman \
-    libcimcclient0 \
-    cim-schema \
-    libsfcutil0 \
-    sfcb || true
+  TMPDIR=$(mktemp -d)
+  cd "$TMPDIR"
 
-  # libssl1.1 is not in Debian 12 repos - build a compatibility shim from source
-  # or pull the last known working backport from snapshot.debian.org
-  if ! dpkg -l libssl1.1 2>/dev/null | grep -q "^ii"; then
-    echo "libssl1.1 not found - fetching from snapshot.debian.org (Debian 11 backport)"
-    wget "https://snapshot.debian.org/archive/debian-security/20230922T235357Z/pool/updates/main/o/openssl/libssl1.1_1.1.1w-0+deb11u1_amd64.deb" -O /tmp/libssl1.1.deb
-    dpkg -i /tmp/libssl1.1.deb || true
-    rm /tmp/libssl1.1.deb
+  # --- openwsman and related deps (from Ubuntu Jammy, same as OMSA repo target) ---
+  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/libwsman-curl-client-transport1_2.6.5-0ubuntu3_amd64.deb
+  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/libwsman-client4_2.6.5-0ubuntu3_amd64.deb
+  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/libwsman1_2.6.5-0ubuntu3_amd64.deb
+  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/libwsman-server1_2.6.5-0ubuntu3_amd64.deb
+  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/s/sblim-sfcc/libcimcclient0_2.2.8-0ubuntu2_amd64.deb
+  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/openwsman_2.6.5-0ubuntu3_amd64.deb
+  wget -q http://archive.ubuntu.com/ubuntu/pool/multiverse/c/cim-schema/cim-schema_2.48.0-0ubuntu1_all.deb
+  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/s/sblim-sfc-common/libsfcutil0_1.0.1-0ubuntu4_amd64.deb
+  wget -q http://archive.ubuntu.com/ubuntu/pool/multiverse/s/sblim-sfcb/sfcb_1.4.9-0ubuntu5_amd64.deb
+  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/s/sblim-cmpi-devel/libcmpicppimpl0_2.0.3-0ubuntu2_amd64.deb
+
+  # --- libssl1.1 - find current valid snapshot ---
+  # Pull from snapshot.debian.org using a known-good Debian 11 timestamp
+  wget -q "https://snapshot.debian.org/archive/debian/20230101T000000Z/pool/main/o/openssl/libssl1.1_1.1.1n-0+deb11u4_amd64.deb" -O libssl1.1.deb
+  if [ ! -s libssl1.1.deb ]; then
+    # fallback: try the official Debian 11 security archive directly
+    wget -q "http://security.debian.org/debian-security/pool/updates/main/o/openssl/libssl1.1_1.1.1w-0+deb11u1_amd64.deb" -O libssl1.1.deb
   fi
+
+  dpkg -i --force-depends libssl1.1.deb
+  dpkg -i --force-depends libwsman-curl-client-transport1_2.6.5-0ubuntu3_amd64.deb
+  dpkg -i --force-depends libwsman-client4_2.6.5-0ubuntu3_amd64.deb
+  dpkg -i --force-depends libwsman1_2.6.5-0ubuntu3_amd64.deb
+  dpkg -i --force-depends libwsman-server1_2.6.5-0ubuntu3_amd64.deb
+  dpkg -i --force-depends libcimcclient0_2.2.8-0ubuntu2_amd64.deb
+  dpkg -i --force-depends openwsman_2.6.5-0ubuntu3_amd64.deb
+  dpkg -i --force-depends cim-schema_2.48.0-0ubuntu1_all.deb
+  dpkg -i --force-depends libsfcutil0_1.0.1-0ubuntu4_amd64.deb
+  dpkg -i --force-depends sfcb_1.4.9-0ubuntu5_amd64.deb
+  dpkg -i --force-depends libcmpicppimpl0_2.0.3-0ubuntu2_amd64.deb
+
+  cd "$SCRIPTPATH"
+  rm -rf "$TMPDIR"
 fi
 
 ### End Phase 3
