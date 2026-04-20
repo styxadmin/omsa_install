@@ -287,76 +287,34 @@ PHASE="Special_Dependancies"
 phaseheader $PHASE
 sleep 1
 #===========================================================================================================================================
-# Get Special Dependancies
+# Get Special Dependencies - Updated for Proxmox 9 / Debian 12 (Bookworm)
 
 if [ $DEBUG -eq 1 ]
 then
-  echo -e "\e[96m++ $PHASE - wget http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/libwsman-curl-client-transport1_2.6.5-0ubuntu3_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - wget http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/libwsman-client4_2.6.5-0ubuntu3_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - wget http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/libwsman1_2.6.5-0ubuntu3_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - wget http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/libwsman-server1_2.6.5-0ubuntu3_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - wget http://archive.ubuntu.com/ubuntu/pool/universe/s/sblim-sfcc/libcimcclient0_2.2.8-0ubuntu2_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - wget http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/openwsman_2.6.5-0ubuntu3_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - wget http://archive.ubuntu.com/ubuntu/pool/multiverse/c/cim-schema/cim-schema_2.48.0-0ubuntu1_all.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - wget http://archive.ubuntu.com/ubuntu/pool/universe/s/sblim-sfc-common/libsfcutil0_1.0.1-0ubuntu4_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - wget http://archive.ubuntu.com/ubuntu/pool/multiverse/s/sblim-sfcb/sfcb_1.4.9-0ubuntu5_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - wget http://archive.ubuntu.com/ubuntu/pool/universe/s/sblim-cmpi-devel/libcmpicppimpl0_2.0.3-0ubuntu2_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - dpkg -i libwsman-curl-client-transport1_2.6.5-0ubuntu3_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - dpkg -i libwsman-client4_2.6.5-0ubuntu3_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - dpkg -i libwsman1_2.6.5-0ubuntu3_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - dpkg -i libwsman-server1_2.6.5-0ubuntu3_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - dpkg -i libcimcclient0_2.2.8-0ubuntu2_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - dpkg -i openwsman_2.6.5-0ubuntu3_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - dpkg -i cim-schema_2.48.0-0ubuntu1_all.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - dpkg -i libsfcutil0_1.0.1-0ubuntu4_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - dpkg -i sfcb_1.4.9-0ubuntu5_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - dpkg -i libcmpicppimpl0_2.0.3-0ubuntu2_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - rm $SCRIPTPATH/libwsman-curl-client-transport1_2.6.5-0ubuntu3_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - rm $SCRIPTPATH/libwsman-client4_2.6.5-0ubuntu3_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - rm $SCRIPTPATH/libwsman1_2.6.5-0ubuntu3_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - rm $SCRIPTPATH/libwsman-server1_2.6.5-0ubuntu3_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - rm $SCRIPTPATH/libcimcclient0_2.2.8-0ubuntu2_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - rm $SCRIPTPATH/openwsman_2.6.5-0ubuntu3_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - rm $SCRIPTPATH/cim-schema_2.48.0-0ubuntu1_all.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - rm $SCRIPTPATH/libsfcutil0_1.0.1-0ubuntu4_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - rm $SCRIPTPATH/sfcb_1.4.9-0ubuntu5_amd64.deb\e[39m"
-  echo -e "\e[96m++ $PHASE - rm $SCRIPTPATH/libcmpicppimpl0_2.0.3-0ubuntu2_amd64.deb\e[39m"
-
+  echo -e "\e[96m++ $PHASE - (Debian 12 Bookworm path - pulling openwsman from Debian repos)\e[39m"
+  echo -e "\e[96m++ $PHASE - apt install -y libwsman1 libwsman-client4 libwsman-curl-client-transport1 openwsman libcimcclient0 cim-schema libsfcutil0 sfcb\e[39m"
 else
   echo
-  wget http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/libwsman-curl-client-transport1_2.6.5-0ubuntu3_amd64.deb
-  wget http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/libwsman-client4_2.6.5-0ubuntu3_amd64.deb
-  wget http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/libwsman1_2.6.5-0ubuntu3_amd64.deb
-  wget http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/libwsman-server1_2.6.5-0ubuntu3_amd64.deb
-  wget http://archive.ubuntu.com/ubuntu/pool/universe/s/sblim-sfcc/libcimcclient0_2.2.8-0ubuntu2_amd64.deb
-  wget http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/openwsman_2.6.5-0ubuntu3_amd64.deb
-  wget http://archive.ubuntu.com/ubuntu/pool/multiverse/c/cim-schema/cim-schema_2.48.0-0ubuntu1_all.deb
-  wget http://archive.ubuntu.com/ubuntu/pool/universe/s/sblim-sfc-common/libsfcutil0_1.0.1-0ubuntu4_amd64.deb
-  wget http://archive.ubuntu.com/ubuntu/pool/multiverse/s/sblim-sfcb/sfcb_1.4.9-0ubuntu5_amd64.deb
-  wget http://archive.ubuntu.com/ubuntu/pool/universe/s/sblim-cmpi-devel/libcmpicppimpl0_2.0.3-0ubuntu2_amd64.deb
-  wget http://security.debian.org/debian-security/pool/updates/main/o/openssl/libssl1.1_1.1.1w-0+deb11u4_amd64.deb
-  dpkg -i libssl1.1_1.1.1w-0+deb11u4_amd64.deb
-  dpkg -i libwsman-curl-client-transport1_2.6.5-0ubuntu3_amd64.deb
-  dpkg -i libwsman-client4_2.6.5-0ubuntu3_amd64.deb
-  dpkg -i libwsman1_2.6.5-0ubuntu3_amd64.deb
-  dpkg -i libwsman-server1_2.6.5-0ubuntu3_amd64.deb
-  dpkg -i libcimcclient0_2.2.8-0ubuntu2_amd64.deb
-  dpkg -i openwsman_2.6.5-0ubuntu3_amd64.deb
-  dpkg -i cim-schema_2.48.0-0ubuntu1_all.deb
-  dpkg -i libsfcutil0_1.0.1-0ubuntu4_amd64.deb
-  dpkg -i sfcb_1.4.9-0ubuntu5_amd64.deb
-  dpkg -i libcmpicppimpl0_2.0.3-0ubuntu2_amd64.deb
-  rm "$SCRIPTPATH/libwsman-curl-client-transport1_2.6.5-0ubuntu3_amd64.deb"
-  rm "$SCRIPTPATH/libwsman-client4_2.6.5-0ubuntu3_amd64.deb"
-  rm "$SCRIPTPATH/libwsman1_2.6.5-0ubuntu3_amd64.deb"
-  rm "$SCRIPTPATH/libwsman-server1_2.6.5-0ubuntu3_amd64.deb"
-  rm "$SCRIPTPATH/libcimcclient0_2.2.8-0ubuntu2_amd64.deb"
-  rm "$SCRIPTPATH/openwsman_2.6.5-0ubuntu3_amd64.deb"
-  rm "$SCRIPTPATH/cim-schema_2.48.0-0ubuntu1_all.deb"
-  rm "$SCRIPTPATH/libsfcutil0_1.0.1-0ubuntu4_amd64.deb"
-  rm "$SCRIPTPATH/sfcb_1.4.9-0ubuntu5_amd64.deb"
-  rm "$SCRIPTPATH/libcmpicppimpl0_2.0.3-0ubuntu2_amd64.deb"
-  rm "$SCRIPTPATH/libssl1.1_1.1.1w-0+deb11u4_amd64.deb"
+  # On Debian 12, openwsman and most WSMAN libs are available natively.
+  # Install from apt directly rather than pulling Ubuntu .deb files.
+  apt install -y \
+    libwsman1 \
+    libwsman-client4 \
+    libwsman-curl-client-transport1 \
+    openwsman \
+    libcimcclient0 \
+    cim-schema \
+    libsfcutil0 \
+    sfcb || true
+
+  # libssl1.1 is not in Debian 12 repos - build a compatibility shim from source
+  # or pull the last known working backport from snapshot.debian.org
+  if ! dpkg -l libssl1.1 2>/dev/null | grep -q "^ii"; then
+    echo "libssl1.1 not found - fetching from snapshot.debian.org (Debian 11 backport)"
+    wget "https://snapshot.debian.org/archive/debian-security/20230922T235357Z/pool/updates/main/o/openssl/libssl1.1_1.1.1w-0+deb11u1_amd64.deb" -O /tmp/libssl1.1.deb
+    dpkg -i /tmp/libssl1.1.deb || true
+    rm /tmp/libssl1.1.deb
+  fi
 fi
 
 ### End Phase 3
@@ -373,11 +331,12 @@ sleep 1
 if [ $DEBUG -eq 1 ]
 then
   echo -e "\e[96m++ $PHASE - apt update\e[39m"
-  echo -e "\e[96m++ $PHASE - apt install srvadmin-all libncurses5 libxslt-dev\e[39m"
+  echo -e "\e[96m++ $PHASE - apt install srvadmin-all libncurses6 libxslt-dev\e[39m"
 else
   echo
   apt update
-  apt install srvadmin-all libncurses5 libxslt-dev -y
+  # libncurses5 is dropped in Debian 12; use libncurses6
+  apt install srvadmin-all libncurses6 libxslt-dev -y
 fi
 
 ### End Phase 4
