@@ -17,7 +17,7 @@ For Dell R720, use option 4 (11.0.0)
 
 This script is self-updating. The self-update routine uses git commands to make the update so this script should be "installed" with the below command.
 
-`git clone https://github.com/DocDrydenn/omsa_install.git`
+`git clone https://github.com/styxadmin/omsa_install.git`
 
 **UPDATE: If you decide not to install via a git clone, you can still use this script, however, it will just skip the update check and continue on.**
 
