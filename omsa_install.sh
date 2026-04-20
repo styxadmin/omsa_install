@@ -274,7 +274,7 @@ then
 else
   echo
   echo "deb [signed-by=/usr/share/keyrings/dell-openmanage.gpg] https://$FINAL_URL $BUILD main" > /etc/apt/sources.list.d/linux.dell.com.sources.list
-  sudo gpg --no-default-keyring --keyring /usr/share/keyrings/dell-openmanage.gpg --keyserver keyserver.ubuntu.com --recv-keys 1285491434D8786F
+  gpg --no-default-keyring --keyring /usr/share/keyrings/dell-openmanage.gpg --keyserver keyserver.ubuntu.com --recv-keys 1285491434D8786F
   apt update
 fi
 
