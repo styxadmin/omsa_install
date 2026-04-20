@@ -267,14 +267,16 @@ sleep 1
 if [ $DEBUG -eq 1 ]
 then
   echo -e "\e[96m++ $PHASE - deb https://$FINAL_URL $BUILD main > /etc/apt/sources.list.d/linux.dell.com.sources.list\e[39m"
-  echo -e "\e[96m++ $PHASE - wget https://linux.dell.com/repo/pgp_pubkeys/0x1285491434D8786F.asc\e[39m"
-  echo -e "\e[96m++ $PHASE - apt-key add 0x1285491434D8786F.asc\e[39m"
+  echo -e "\e[96m++ $PHASE - wget https://linux.dell.com/repo/pgp_pubkeys/0x1285491434D8786F.asc -O /tmp/dell-omsa.asc\e[39m"
+  echo -e "\e[96m++ $PHASE - gpg --dearmor < /tmp/dell-omsa.asc > /usr/share/keyrings/dell-openmanage.gpg\e[39m"
   echo -e "\e[96m++ $PHASE - apt update\e[39m"
   echo -e "\e[96m++ $PHASE - rm $SCRIPTPATH/0x1285491434D8786F.asc\e[39m"
 else
   echo
   echo "deb [signed-by=/usr/share/keyrings/dell-openmanage.gpg] https://$FINAL_URL $BUILD main" > /etc/apt/sources.list.d/linux.dell.com.sources.list
-  gpg --no-default-keyring --keyring /usr/share/keyrings/dell-openmanage.gpg --keyserver keyserver.ubuntu.com --recv-keys 1285491434D8786F
+  wget -q https://linux.dell.com/repo/pgp_pubkeys/0x1285491434D8786F.asc -O /tmp/dell-omsa.asc
+gpg --dearmor < /tmp/dell-omsa.asc > /usr/share/keyrings/dell-openmanage.gpg
+rm /tmp/dell-omsa.asc
   apt update
 fi
 
