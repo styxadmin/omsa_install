@@ -152,8 +152,6 @@ trap 'errexit' ERR
 # Redirect all output to log file and screen simultaneously
 exec > >(tee -a /var/log/omsa_install.log) 2>&1
 
-# Enable command tracing
-set -x
 
 # Parse Commandline Arguments
 { [ "$1" = "-h" ] || [ "$1" = "h" ]; } && usage_example
