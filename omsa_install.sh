@@ -161,6 +161,7 @@ usage_example() {
 
 # Error Trap
 trap 'errexit' ERR
+set -x
 # Redirect all output to log file and screen simultaneously
 exec > >(tee -a /var/log/omsa_install.log) 2>&1
 
