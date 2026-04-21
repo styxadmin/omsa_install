@@ -293,19 +293,21 @@ else
   wget -q http://archive.ubuntu.com/ubuntu/pool/multiverse/s/sblim-sfcb/sfcb_1.4.9-0ubuntu5_amd64.deb || true
   wget -q http://archive.ubuntu.com/ubuntu/pool/universe/s/sblim-cmpi-devel/libcmpicppimpl0_2.0.3-0ubuntu2_amd64.deb || true
 
-  # --- libssl1.1 - try multiple sources with fallbacks ---
-  wget -q "https://snapshot.debian.org/archive/debian/20230101T000000Z/pool/main/o/openssl/libssl1.1_1.1.1n-0+deb11u4_amd64.deb" -O libssl1.1.deb || true
+  # --- libssl1.1 - required by openwsman/sfcb, not available in Debian 12/13 ---
+  # Try the official Debian bullseye security mirror first (most reliable)
+  wget -q "http://security.debian.org/debian-security/pool/updates/main/o/openssl/libssl1.1_1.1.1w-0+deb11u5_amd64.deb" -O libssl1.1.deb || true
   if [ ! -s libssl1.1.deb ]; then
-    echo "   First libssl1.1 source failed, trying fallback 1..."
-    wget -q "http://security.debian.org/debian-security/pool/updates/main/o/openssl/libssl1.1_1.1.1w-0+deb11u1_amd64.deb" -O libssl1.1.deb || true
+    echo "   Primary source failed, trying Debian ftp mirror..."
+    wget -q "http://ftp.debian.org/debian/pool/main/o/openssl/libssl1.1_1.1.1w-0+deb11u5_amd64.deb" -O libssl1.1.deb || true
   fi
   if [ ! -s libssl1.1.deb ]; then
-    echo "   Fallback 1 failed, trying fallback 2..."
-    wget -q "https://snapshot.debian.org/archive/debian-security/20231001T000000Z/pool/updates/main/o/openssl/libssl1.1_1.1.1w-0+deb11u1_amd64.deb" -O libssl1.1.deb || true
+    echo "   Trying US Debian mirror..."
+    wget -q "http://ftp.us.debian.org/debian/pool/main/o/openssl/libssl1.1_1.1.1w-0+deb11u1_amd64.deb" -O libssl1.1.deb || true
   fi
   if [ ! -s libssl1.1.deb ]; then
-    echo "   WARNING: Could not download libssl1.1 from any source - continuing anyway, OMSA may fail later"
+    echo "   WARNING: Could not download libssl1.1 from any source - OMSA will fail to install"
   else
+    echo "   libssl1.1 downloaded successfully, installing..."
     dpkg -i --force-depends libssl1.1.deb || true
   fi
 
@@ -342,7 +344,10 @@ else
   echo
   apt update
   # libncurses5 dropped in Debian 12+; use libncurses6
-  apt install srvadmin-all libncurses6 libxslt-dev -y
+  # || true prevents the error trap firing on dependency warnings
+  apt install srvadmin-all libncurses6 libxslt-dev -y || true
+  # Clean up any broken dependency state left by the forced dpkg installs
+  apt --fix-broken install -y || true
 fi
 
 ### End Phase 4
