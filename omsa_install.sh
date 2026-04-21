@@ -13,7 +13,6 @@ DEBUG=0
 URL='linux.dell.com/repo/community/openmanage/'
 RAW_VERSION_ARRAY=()
 VERSION_ARRAY=('Cancel')
-#VERSION=""
 RAW_BUILD_ARRAY=()
 BUILD_ARRAY=('Cancel')
 BUILD=""
@@ -24,9 +23,6 @@ FINAL_URL=""
 self_update() {
     echo "Checking for Script Updates..."
     echo
-    # Check if script path is a git clone.
-    #   If true, then check for update.
-    #   If false, skip self-update check/funciton.
     if [[ -d "$SCRIPTPATH/.git" ]]; then
         echo "   ✓ Git Clone Detected: Checking Script Version..."
         cd "$SCRIPTPATH" || exit 1
@@ -46,11 +42,7 @@ self_update() {
             echo "   ✓ Update Complete. Running New Version. Standby..."
             sleep 3
             cd - > /dev/null || exit 1
-
-            # Execute new instance of the new script
             exec "$SCRIPTNAME" "${ARGS[@]}"
-
-            # Exit this old instance of the script
             exit 1
         }
         echo "   ✓ Version: Current"
@@ -61,11 +53,8 @@ self_update() {
 
 # Error Trapping with Cleanup Function
 errexit() {
-  # Draw 5 lines of + and message
   for i in {1..5}; do echo "+"; done
   echo -e "\e[91mError raised! Cleaning Up and Exiting.\e[39m"
-
-  # Dirty Exit
   exit 1
 }
 
@@ -73,7 +62,7 @@ errexit() {
 createmenu_version ()
 {
   echo "Select desired version:"
-  select option; do # in "$@" is the default
+  select option; do
     if [ "$REPLY" -eq 1 ];
     then
       echo "Exiting..."
@@ -81,9 +70,7 @@ createmenu_version ()
       break;
     elif [ "$REPLY" -ge 1 ] && [ "$REPLY" -le $# ];
     then
-      #echo "You selected $option which is option $REPLY"
       USR_VER_URL=$URL$option
-      #VERSION=${option%?}
       break;
     else
       echo "Incorrect Input: Select a number 1-$#"
@@ -95,7 +82,7 @@ createmenu_version ()
 createmenu_build ()
 {
   echo "Select desired build:"
-  select option; do # in "$@" is the default
+  select option; do
     if [ "$REPLY" -eq 1 ];
     then
       echo "Exiting..."
@@ -161,9 +148,12 @@ usage_example() {
 
 # Error Trap
 trap 'errexit' ERR
-set -x
+
 # Redirect all output to log file and screen simultaneously
 exec > >(tee -a /var/log/omsa_install.log) 2>&1
+
+# Enable command tracing
+set -x
 
 # Parse Commandline Arguments
 { [ "$1" = "-h" ] || [ "$1" = "h" ]; } && usage_example
@@ -184,7 +174,6 @@ PHASE="Script_Self-Update"
 phaseheader $PHASE
 sleep 1
 #===========================================================================================================================================
-# Self Update
 self_update
 
 ### End Phase 0
@@ -199,35 +188,30 @@ sleep 1
 echo "Parsing for available versions."
 echo "(this can take up to 30 seconds)"
 echo
-# Parse RAW Dell Website
+
 IFS=$'\n' read -r -d '' -a RAW_VERSION_ARRAY < <( wget -q $URL -O - | tr "\t\r\n'" '   "' | grep -i -o '<a[^>]\+href[ ]*=[ \t]*"[^"]\+">[^<]*</a>' | sed -e 's/^.*"\([^"]\+\)".*$/\1/g' && printf '\0' )
 
-# Parse for Versions
 for i in "${RAW_VERSION_ARRAY[@]}"
 do
   [[ $i == [0-9]* ]] && [[ ${#i} -gt 2 ]] && VERSION_ARRAY+=("$i")
 done
 
-# Prompt for Desired Version
 createmenu_version "${VERSION_ARRAY[@]}"
 
 echo
 echo "Parsing for available builds..."
 echo "(this can take up to 30 seconds)"
 echo
-# Parse RAW Builds
+
 IFS=$'\n' read -r -d '' -a RAW_BUILD_ARRAY < <( wget -q $USR_VER_URL -O - | tr "\t\r\n'" '   "' | grep -i -o '<a[^>]\+href[ ]*=[ \t]*"[^"]\+">[^<]*</a>' | sed -e 's/^.*"\([^"]\+\)".*$/\1/g' && printf '\0' )
 
-# Parse for Builds
 for i in "${RAW_BUILD_ARRAY[@]}"
 do
   [[ $i == [a-z]* ]] && BUILD_ARRAY+=("$i")
 done
 
-# Prompt for Desired Build
 createmenu_build "${BUILD_ARRAY[@]}"
 
-#echo "Final URL: $FINAL_URL"
 echo
 
 ### End Phase 0.5
@@ -239,8 +223,6 @@ PHASE="Old_OMSA_Purge"
 phaseheader $PHASE
 sleep 1
 #===========================================================================================================================================
-# Purge Everything OMSA
-
 if [ $DEBUG -eq 1 ]
 then
   echo -e "\e[96m++ $PHASE - [[ -f /etc/apt/sources.list.d/linux.dell.com.sources.list ]] && rm /etc/apt/sources.list.d/linux.dell.com.sources.list"
@@ -251,7 +233,7 @@ else
   [[ -f "/etc/apt/sources.list.d/linux.dell.com.sources.list" ]] && rm /etc/apt/sources.list.d/linux.dell.com.sources.list
   [[ ! -d "/opt/dell/srvadmin/sbin" ]] && mkdir -p /opt/dell/srvadmin/sbin
 
-  if dpkg-query -W --showformat='${Status}\n' srvadmin-*|grep "install ok installed" >/dev/null; then
+  if dpkg-query -W --showformat='${Status}\n' srvadmin-* 2>/dev/null | grep -q "install ok installed"; then
     apt purge srvadmin-* -y
   fi
 fi
@@ -265,21 +247,18 @@ PHASE="Dell_Repo_Setup"
 phaseheader $PHASE
 sleep 1
 #===========================================================================================================================================
-# Setup Repo
-
 if [ $DEBUG -eq 1 ]
 then
   echo -e "\e[96m++ $PHASE - deb https://$FINAL_URL $BUILD main > /etc/apt/sources.list.d/linux.dell.com.sources.list\e[39m"
   echo -e "\e[96m++ $PHASE - wget https://linux.dell.com/repo/pgp_pubkeys/0x1285491434D8786F.asc -O /tmp/dell-omsa.asc\e[39m"
   echo -e "\e[96m++ $PHASE - gpg --dearmor < /tmp/dell-omsa.asc > /usr/share/keyrings/dell-openmanage.gpg\e[39m"
   echo -e "\e[96m++ $PHASE - apt update\e[39m"
-  echo -e "\e[96m++ $PHASE - rm $SCRIPTPATH/0x1285491434D8786F.asc\e[39m"
 else
   echo
   echo "deb [signed-by=/usr/share/keyrings/dell-openmanage.gpg] https://$FINAL_URL $BUILD main" > /etc/apt/sources.list.d/linux.dell.com.sources.list
   wget -q https://linux.dell.com/repo/pgp_pubkeys/0x1285491434D8786F.asc -O /tmp/dell-omsa.asc
-gpg --dearmor < /tmp/dell-omsa.asc > /usr/share/keyrings/dell-openmanage.gpg
-rm /tmp/dell-omsa.asc
+  gpg --dearmor < /tmp/dell-omsa.asc > /usr/share/keyrings/dell-openmanage.gpg
+  rm /tmp/dell-omsa.asc
   apt update
 fi
 
@@ -292,47 +271,55 @@ PHASE="Special_Dependancies"
 phaseheader $PHASE
 sleep 1
 #===========================================================================================================================================
-
 if [ $DEBUG -eq 1 ]
 then
-  echo -e "\e[96m++ $PHASE - Downloading and installing openwsman/wsman deps from Ubuntu Jammy\e[39m"
-  echo -e "\e[96m++ $PHASE - Downloading and installing libssl1.1 from Debian snapshot\e[39m"
+  echo -e "\e[96m++ $PHASE - Downloading openwsman/wsman deps from Ubuntu Jammy\e[39m"
+  echo -e "\e[96m++ $PHASE - Downloading libssl1.1 from multiple fallback sources\e[39m"
+  echo -e "\e[96m++ $PHASE - dpkg -i --force-depends <all packages>\e[39m"
 else
   echo
   TMPDIR=$(mktemp -d)
   cd "$TMPDIR"
 
-  # --- openwsman and related deps (from Ubuntu Jammy, same as OMSA repo target) ---
-  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/libwsman-curl-client-transport1_2.6.5-0ubuntu3_amd64.deb
-  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/libwsman-client4_2.6.5-0ubuntu3_amd64.deb
-  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/libwsman1_2.6.5-0ubuntu3_amd64.deb
-  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/libwsman-server1_2.6.5-0ubuntu3_amd64.deb
-  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/s/sblim-sfcc/libcimcclient0_2.2.8-0ubuntu2_amd64.deb
-  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/openwsman_2.6.5-0ubuntu3_amd64.deb
-  wget -q http://archive.ubuntu.com/ubuntu/pool/multiverse/c/cim-schema/cim-schema_2.48.0-0ubuntu1_all.deb
-  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/s/sblim-sfc-common/libsfcutil0_1.0.1-0ubuntu4_amd64.deb
-  wget -q http://archive.ubuntu.com/ubuntu/pool/multiverse/s/sblim-sfcb/sfcb_1.4.9-0ubuntu5_amd64.deb
-  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/s/sblim-cmpi-devel/libcmpicppimpl0_2.0.3-0ubuntu2_amd64.deb
+  # --- openwsman and related deps (Ubuntu Jammy builds, matching OMSA repo target) ---
+  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/libwsman-curl-client-transport1_2.6.5-0ubuntu3_amd64.deb || true
+  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/libwsman-client4_2.6.5-0ubuntu3_amd64.deb || true
+  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/libwsman1_2.6.5-0ubuntu3_amd64.deb || true
+  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/libwsman-server1_2.6.5-0ubuntu3_amd64.deb || true
+  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/s/sblim-sfcc/libcimcclient0_2.2.8-0ubuntu2_amd64.deb || true
+  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/o/openwsman/openwsman_2.6.5-0ubuntu3_amd64.deb || true
+  wget -q http://archive.ubuntu.com/ubuntu/pool/multiverse/c/cim-schema/cim-schema_2.48.0-0ubuntu1_all.deb || true
+  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/s/sblim-sfc-common/libsfcutil0_1.0.1-0ubuntu4_amd64.deb || true
+  wget -q http://archive.ubuntu.com/ubuntu/pool/multiverse/s/sblim-sfcb/sfcb_1.4.9-0ubuntu5_amd64.deb || true
+  wget -q http://archive.ubuntu.com/ubuntu/pool/universe/s/sblim-cmpi-devel/libcmpicppimpl0_2.0.3-0ubuntu2_amd64.deb || true
 
-  # --- libssl1.1 - find current valid snapshot ---
-  # Pull from snapshot.debian.org using a known-good Debian 11 timestamp
-  wget -q "https://snapshot.debian.org/archive/debian/20230101T000000Z/pool/main/o/openssl/libssl1.1_1.1.1n-0+deb11u4_amd64.deb" -O libssl1.1.deb
+  # --- libssl1.1 - try multiple sources with fallbacks ---
+  wget -q "https://snapshot.debian.org/archive/debian/20230101T000000Z/pool/main/o/openssl/libssl1.1_1.1.1n-0+deb11u4_amd64.deb" -O libssl1.1.deb || true
   if [ ! -s libssl1.1.deb ]; then
-    # fallback: try the official Debian 11 security archive directly
-    wget -q "http://security.debian.org/debian-security/pool/updates/main/o/openssl/libssl1.1_1.1.1w-0+deb11u1_amd64.deb" -O libssl1.1.deb
+    echo "   First libssl1.1 source failed, trying fallback 1..."
+    wget -q "http://security.debian.org/debian-security/pool/updates/main/o/openssl/libssl1.1_1.1.1w-0+deb11u1_amd64.deb" -O libssl1.1.deb || true
+  fi
+  if [ ! -s libssl1.1.deb ]; then
+    echo "   Fallback 1 failed, trying fallback 2..."
+    wget -q "https://snapshot.debian.org/archive/debian-security/20231001T000000Z/pool/updates/main/o/openssl/libssl1.1_1.1.1w-0+deb11u1_amd64.deb" -O libssl1.1.deb || true
+  fi
+  if [ ! -s libssl1.1.deb ]; then
+    echo "   WARNING: Could not download libssl1.1 from any source - continuing anyway, OMSA may fail later"
+  else
+    dpkg -i --force-depends libssl1.1.deb || true
   fi
 
-  dpkg -i --force-depends libssl1.1.deb
-  dpkg -i --force-depends libwsman-curl-client-transport1_2.6.5-0ubuntu3_amd64.deb
-  dpkg -i --force-depends libwsman-client4_2.6.5-0ubuntu3_amd64.deb
-  dpkg -i --force-depends libwsman1_2.6.5-0ubuntu3_amd64.deb
-  dpkg -i --force-depends libwsman-server1_2.6.5-0ubuntu3_amd64.deb
-  dpkg -i --force-depends libcimcclient0_2.2.8-0ubuntu2_amd64.deb
-  dpkg -i --force-depends openwsman_2.6.5-0ubuntu3_amd64.deb
-  dpkg -i --force-depends cim-schema_2.48.0-0ubuntu1_all.deb
-  dpkg -i --force-depends libsfcutil0_1.0.1-0ubuntu4_amd64.deb
-  dpkg -i --force-depends sfcb_1.4.9-0ubuntu5_amd64.deb
-  dpkg -i --force-depends libcmpicppimpl0_2.0.3-0ubuntu2_amd64.deb
+  # --- Install openwsman packages ---
+  [ -s libwsman-curl-client-transport1_2.6.5-0ubuntu3_amd64.deb ] && dpkg -i --force-depends libwsman-curl-client-transport1_2.6.5-0ubuntu3_amd64.deb || true
+  [ -s libwsman-client4_2.6.5-0ubuntu3_amd64.deb ]               && dpkg -i --force-depends libwsman-client4_2.6.5-0ubuntu3_amd64.deb || true
+  [ -s libwsman1_2.6.5-0ubuntu3_amd64.deb ]                       && dpkg -i --force-depends libwsman1_2.6.5-0ubuntu3_amd64.deb || true
+  [ -s libwsman-server1_2.6.5-0ubuntu3_amd64.deb ]                && dpkg -i --force-depends libwsman-server1_2.6.5-0ubuntu3_amd64.deb || true
+  [ -s libcimcclient0_2.2.8-0ubuntu2_amd64.deb ]                  && dpkg -i --force-depends libcimcclient0_2.2.8-0ubuntu2_amd64.deb || true
+  [ -s openwsman_2.6.5-0ubuntu3_amd64.deb ]                       && dpkg -i --force-depends openwsman_2.6.5-0ubuntu3_amd64.deb || true
+  [ -s cim-schema_2.48.0-0ubuntu1_all.deb ]                       && dpkg -i --force-depends cim-schema_2.48.0-0ubuntu1_all.deb || true
+  [ -s libsfcutil0_1.0.1-0ubuntu4_amd64.deb ]                     && dpkg -i --force-depends libsfcutil0_1.0.1-0ubuntu4_amd64.deb || true
+  [ -s sfcb_1.4.9-0ubuntu5_amd64.deb ]                            && dpkg -i --force-depends sfcb_1.4.9-0ubuntu5_amd64.deb || true
+  [ -s libcmpicppimpl0_2.0.3-0ubuntu2_amd64.deb ]                 && dpkg -i --force-depends libcmpicppimpl0_2.0.3-0ubuntu2_amd64.deb || true
 
   cd "$SCRIPTPATH"
   rm -rf "$TMPDIR"
@@ -347,8 +334,6 @@ PHASE="Install_OMSA"
 phaseheader $PHASE
 sleep 1
 #===========================================================================================================================================
-# Install Everything!
-
 if [ $DEBUG -eq 1 ]
 then
   echo -e "\e[96m++ $PHASE - apt update\e[39m"
@@ -356,7 +341,7 @@ then
 else
   echo
   apt update
-  # libncurses5 is dropped in Debian 12; use libncurses6
+  # libncurses5 dropped in Debian 12+; use libncurses6
   apt install srvadmin-all libncurses6 libxslt-dev -y
 fi
 
@@ -369,8 +354,6 @@ PHASE="Restart_OMSA_Services"
 phaseheader $PHASE
 sleep 1
 #===========================================================================================================================================
-# Restart Service
-
 if [ $DEBUG -eq 1 ]
 then
   echo -e "\e[96m++ $PHASE - /opt/dell/srvadmin/sbin/srvadmin-services.sh restart\e[39m"
