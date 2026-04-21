@@ -121,7 +121,7 @@ inoutheader() {
   echo -e "==================================================\e[39m"
   echo " Dell OMSA Installer Script $VERS"
   echo
-  echo " by DocDrydenn, edited by WilliamLi0623"
+  echo " by DocDrydenn, edited by styxadmin with the help of Claude"
   echo
 
   if [[ "$DEBUG" = "1" ]]; then echo -e "\e[5m\e[96m++ DEBUG ENABLED - SIMULATION ONLY ++\e[39m\e[0m"; echo; fi
