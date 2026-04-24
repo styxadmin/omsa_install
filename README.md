@@ -2,7 +2,7 @@
 
 Simple automated script to install Dell OMSA on Dell PowerEdge R720.
 
-Tested on Proxmox 9.1.7 which runs on Debian 13
+Tested on Proxmox 9.1.9 which runs on Debian 13
 
 For Dell R720, use option 2 (11.0.1.0)
 
