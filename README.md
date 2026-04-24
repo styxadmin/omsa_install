@@ -1,6 +1,6 @@
 # omsa_install.sh
 
-Simple automated script to install Dell OMSA on Dell PowerEdge R720.
+Simple automated script to install Dell OpenManage Server Administrator on a Dell PowerEdge R720.
 
 Tested on Proxmox 9.1.9 which runs on Debian 13
 
